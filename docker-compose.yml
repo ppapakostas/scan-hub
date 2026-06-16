@@ -8,14 +8,14 @@ services:
     container_name: security-hub-db
     networks: [hub-net]
     environment:
-      - POSTGRES_DB=hubdb
-      - POSTGRES_USER=hub
-      - POSTGRES_PASSWORD=hubpass
+      - POSTGRES_DB=your_db_hubdb
+      - POSTGRES_USER=your_db_hubuser
+      - POSTGRES_PASSWORD=your_db_hubpass
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hub -d hubdb"]
+      test: ["CMD-SHELL", "pg_isready -U your_db_hubuser -d your_db_hubdb"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -25,8 +25,8 @@ services:
     container_name: scan-tool.dotsoft.gr
     hostname: scan-tool.dotsoft.gr
     networks: [hub-net]
-    ports:
-      - "5000:5000"
+    #ports:
+      #- "5000:5000"
     depends_on:
       db:
         condition: service_healthy
@@ -39,7 +39,7 @@ services:
       - HUB_USERNAME=dotsoft
       - HUB_PASSWORD=dotsoft123
       - SECRET_KEY=h3!kP9xQz2mLvRsNwYuTdAeJbCfGiOp
-      - DATABASE_URL=postgresql://hub:hubpass@db:5432/hubdb
+      - DATABASE_URL=postgresql://your_db_hubuser:your_db_hubpass@db:5432/your_db_hubdb
       - HUB_DOCKER_NETWORK=hub-net
       - SONAR_HOST_URL=http://sonarqube:9000/sonar
       - SONAR_PUBLIC_URL=${SONAR_PUBLIC_URL:-http://localhost:9000/sonar}

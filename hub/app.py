@@ -41,6 +41,12 @@ DATABASE_URL = os.environ.get('DATABASE_URL', '')
 BASE_DIR = Path(__file__).parent
 RESULTS_DIR = BASE_DIR / "results"
 UPLOADS_DIR = BASE_DIR / "uploads"
+
+def _version_info():
+    try:
+        return json.loads((BASE_DIR / 'version.json').read_text())
+    except Exception:
+        return None
 RESULTS_DIR.mkdir(exist_ok=True)
 UPLOADS_DIR.mkdir(exist_ok=True)
 
@@ -284,7 +290,7 @@ def root():
 
 @app.route('/hub')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', version=_version_info())
 
 
 # ── ZAP ──────────────────────────────────────────────────────────────────────
@@ -319,32 +325,183 @@ def zap_scan():
         job = jobs[job_id]
         script = 'zap-baseline.py' if scan_type == 'baseline' else 'zap-full-scan.py'
         host_job_dir = HOST_RESULTS_DIR / f"zap_{job_id}"
-        cmd = [
-            'docker', 'run', '--rm',
+        zap_port = 8090
+        run_cmd = [
+            'docker', 'run', '-d',
             '--name', container_name,
             '--user', 'root',
             '-v', f'{docker_path(host_job_dir)}:/zap/wrk:rw',
-            '-t', 'ghcr.io/zaproxy/zaproxy:stable',
+            'ghcr.io/zaproxy/zaproxy:stable',
             script, '-t', url, '-r', 'report.html', '-J', 'report.json', '-I',
+            '-P', str(zap_port),
         ]
         job['status'] = 'running'
         job['output'].append(f'[HUB] ZAP {scan_type} scan → {url}')
         job['output'].append('[HUB] (first run pulls the Docker image — may take 1–2 min)')
-        job['output'].append('[HUB] 🔄 Initialising ZAP container…')
+        job['output'].append('[HUB] 🔄 Pulling ZAP image…')
         db_upsert(job)
+
+        def zap_api(path):
+            """Query the in-container ZAP REST API; return parsed JSON or None.
+            zap-full-scan.py prints nothing to stdout until the scan completes, so
+            live progress has to come from polling the API instead of the pipe."""
+            try:
+                r = subprocess.run(
+                    ['docker', 'exec', container_name, 'curl', '-s',
+                     f'http://localhost:{zap_port}{path}'],
+                    capture_output=True, text=True, timeout=10,
+                )
+                return json.loads(r.stdout) if r.stdout.strip() else None
+            except Exception:
+                return None
+
         try:
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT, text=True, bufsize=1)
-            job['proc'] = proc
-            for raw in proc.stdout:
-                line = raw.rstrip()
-                job['output'].append(line)
-                note = _zap_note(line)
-                if note:
-                    job['output'].append(note)
-            proc.wait()
+            # Step 1: Pull image with live progress so user sees something
+            pull_proc = subprocess.Popen(
+                ['docker', 'pull', 'ghcr.io/zaproxy/zaproxy:stable'],
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                text=True, bufsize=1,
+            )
+            for raw in pull_proc.stdout:
+                job['output'].append(raw.rstrip())
+            pull_proc.wait()
+
             if job['status'] == 'stopped':
                 db_upsert(job)
+                return
+
+            # Step 2: Start ZAP detached, then poll its API for live progress
+            job['output'].append('[HUB] 🔄 Starting ZAP container… (≈30–60s to warm up)')
+            subprocess.run(run_cmd, check=True, capture_output=True)
+            job['proc'] = None
+
+            phases = set()
+            last_pct = {'spider': -1, 'ascan': -1}
+            api_up = False
+            idle_polls = 0   # consecutive polls with no new real output
+            hb_idx = 0       # rotates heartbeat messages so they don't look canned
+            while True:
+                if job['status'] == 'stopped':
+                    subprocess.run(['docker', 'stop', container_name], capture_output=True)
+                    break
+
+                before = len(job['output'])
+
+                state = subprocess.run(
+                    ['docker', 'inspect', '--format={{.State.Running}}', container_name],
+                    capture_output=True, text=True,
+                )
+                running = state.stdout.strip() == 'true'
+
+                if zap_api('/JSON/core/view/version/'):
+                    if not api_up:
+                        api_up = True
+                        job['output'].append('[HUB] 🚀 ZAP is up — scan underway…')
+
+                    sp = zap_api('/JSON/spider/view/status/')
+                    if sp and 'status' in sp:
+                        v = int(sp['status'])
+                        if 'spider' not in phases:
+                            phases.add('spider')
+                            job['output'].append('[HUB] 🕷  Phase: Spider — crawling all links on the target…')
+                        if v != last_pct['spider'] and (v - last_pct['spider'] >= 5 or v == 100):
+                            last_pct['spider'] = v
+                            job['output'].append(f'[HUB] 🕷  Spider progress: {v}%')
+                        if v >= 100 and 'spider_done' not in phases:
+                            phases.add('spider_done')
+                            job['output'].append('[HUB] ✅ Spider finished.')
+
+                    pscan = zap_api('/JSON/pscan/view/recordsToScan/')
+                    if pscan and 'recordsToScan' in pscan:
+                        q = int(pscan['recordsToScan'])
+                        if 'pscan' not in phases:
+                            phases.add('pscan')
+                            job['output'].append('[HUB] 🔍 Phase: Passive scan — inspecting HTTP responses…')
+                        if q == 0 and 'spider_done' in phases and 'pscan_done' not in phases:
+                            phases.add('pscan_done')
+                            job['output'].append('[HUB] ✅ Passive scan finished.')
+
+                    asc = zap_api('/JSON/ascan/view/status/')
+                    if asc and 'status' in asc:
+                        v = int(asc['status'])
+                        if 'ascan' not in phases:
+                            phases.add('ascan')
+                            job['output'].append('[HUB] ⚡ Phase: Active scan — probing for SQLi, XSS, RCE… (this takes a while)')
+                        if v != last_pct['ascan'] and (v - last_pct['ascan'] >= 5 or v == 100):
+                            last_pct['ascan'] = v
+                            summ = (zap_api('/JSON/alert/view/alertsSummary/') or {}).get('alertsSummary', {})
+                            alerts = (f" · alerts H:{summ.get('High', 0)} "
+                                      f"M:{summ.get('Medium', 0)} L:{summ.get('Low', 0)}") if summ else ''
+                            job['output'].append(f'[HUB] ⚡ Active scan progress: {v}%{alerts}')
+                        if v >= 100 and 'ascan_done' not in phases:
+                            phases.add('ascan_done')
+                            job['output'].append('[HUB] ✅ Active scan finished — generating report…')
+
+                if not running:
+                    break
+
+                # Heartbeat: ZAP can run for minutes without any status change
+                # (booting the engine, or grinding through active-scan payloads).
+                # Emit a rotating "still working" line after ~15s of silence so the
+                # user never stares at a frozen log and assumes it crashed.
+                if len(job['output']) == before:
+                    idle_polls += 1
+                else:
+                    idle_polls = 0
+                if idle_polls >= 5:  # 5 polls × 3s ≈ 15s of no real output
+                    idle_polls = 0
+                    if not api_up:
+                        beats = [
+                            '[HUB] ⏳ Booting the ZAP engine — this can take up to a minute…',
+                            '[HUB] ⏳ Warming up ZAP (loading scan rules)…',
+                            '[HUB] ⏳ Still starting up, hang tight…',
+                        ]
+                    elif 'ascan' in phases and 'ascan_done' not in phases:
+                        pct = last_pct['ascan'] if last_pct['ascan'] >= 0 else 0
+                        beats = [
+                            f'[HUB] ⚡ Active scan still running ({pct}%) — firing attack payloads…',
+                            f'[HUB] ⚡ Working… ({pct}%) deep scans can take several minutes per rule.',
+                            f'[HUB] ⚡ Still probing endpoints ({pct}%), please wait…',
+                        ]
+                    elif 'spider' in phases and 'spider_done' not in phases:
+                        beats = [
+                            '[HUB] 🕷  Still crawling — discovering pages and forms…',
+                            '[HUB] 🕷  Spider working through the site map…',
+                        ]
+                    else:
+                        beats = [
+                            '[HUB] 🔍 Still scanning — analysing responses…',
+                            '[HUB] 🔍 Working… no issues to report this moment.',
+                        ]
+                    job['output'].append(beats[hb_idx % len(beats)])
+                    hb_idx += 1
+
+                time.sleep(3)
+
+            if job['status'] == 'stopped':
+                subprocess.run(['docker', 'rm', '-f', container_name], capture_output=True)
+                db_upsert(job)
+                return
+
+            # Step 3: Container finished — flush its stdout summary (WARN/PASS/FAIL)
+            logs = subprocess.run(['docker', 'logs', container_name],
+                                  capture_output=True, text=True)
+            for line in (logs.stdout + logs.stderr).splitlines():
+                stripped = line.rstrip()
+                if stripped:
+                    job['output'].append(stripped)
+                    note = _zap_note(stripped)
+                    if note:
+                        job['output'].append(note)
+
+            wait_result = subprocess.run(['docker', 'wait', container_name],
+                                         capture_output=True, text=True)
+            exit_code = int(wait_result.stdout.strip() or '1')
+            subprocess.run(['docker', 'rm', '-f', container_name], capture_output=True)
+
+            if exit_code not in (0, 2):  # ZAP exits 2 when alerts found (normal)
+                job['status'] = 'error'
+                job['output'].append(f'[HUB] ERROR: ZAP exited with code {exit_code}')
                 return
             report = job_dir / 'report.html'
             if report.exists():
@@ -801,13 +958,19 @@ def stream(job_id):
             return
         job = jobs[job_id]
         sent = 0
+        idle_ticks = 0  # how many 0.15s sleeps since last line sent
         while True:
             while sent < len(job['output']):
                 line = job['output'][sent]
                 sent += 1
+                idle_ticks = 0
                 yield f'data: {line}\n\n'
                 if line == '__DONE__':
                     return
+            idle_ticks += 1
+            # Send SSE keepalive comment every ~3 s to prevent proxy/browser timeout
+            if idle_ticks % 20 == 0:
+                yield ': keepalive\n\n'
             time.sleep(0.15)
 
     return Response(generate(), mimetype='text/event-stream',

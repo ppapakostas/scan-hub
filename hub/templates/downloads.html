@@ -23,14 +23,6 @@
       display: flex; align-items: center; gap: 14px;
     }
     header h1 { margin: 0; font-size: 1.3rem; font-weight: 600; }
-    .header-logo {
-      width: 34px; height: 34px;
-      background: linear-gradient(135deg, var(--zap), var(--jmeter));
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; text-decoration: none; flex-shrink: 0;
-      font-size: 16px;
-    }
     .header-sub { color: var(--muted); font-size: .8rem; margin: 0; }
     .back-btn { margin-left: auto; padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: #21262d; color: var(--text); text-decoration: none; font-size: .85rem; transition: background .15s; }
     .back-btn:hover { background: var(--border); color: var(--text); }
@@ -144,9 +136,8 @@
 <body>
 
 <header>
-  <a href="/hub" class="header-logo" aria-label="Security & Testing Hub">
-    <i class="fa-solid fa-shield-halved"></i>
-  </a>
+  <a href="/hub"><img src="https://dotsoft.gr/wp-content/uploads/2024/03/Artboard-15.png"
+       alt="DOTSOFT" style="height:30px; object-fit:contain; flex-shrink:0;" /></a>
   <div style="width:1px; height:26px; background:var(--border); flex-shrink:0;"></div>
   <div>
     <h1>Downloads</h1>
@@ -230,7 +221,7 @@
 </div>
 
 <footer style="text-align:center; padding:20px 24px; color:#484f58; font-size:.72rem; border-top:1px solid var(--border); margin-top:8px;">
-  Security &amp; Testing Hub
+  &copy; Copyright DOTSOFT SA 2026 . All Rights Reserved.
 </footer>
 
 <script>

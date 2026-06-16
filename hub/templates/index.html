@@ -49,7 +49,6 @@
       background: linear-gradient(135deg, var(--zap), var(--jmeter));
       border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
-      color: #fff; text-decoration: none; flex-shrink: 0;
       font-size: 18px;
     }
     header h1 { margin: 0; font-size: 1.3rem; font-weight: 600; letter-spacing: -.3px; }
@@ -460,9 +459,8 @@
 <body>
 
 <header>
-  <a href="/hub" class="header-logo" aria-label="Security & Testing Hub">
-    <i class="fa-solid fa-shield-halved"></i>
-  </a>
+  <a href="/hub"><img src="https://dotsoft.gr/wp-content/uploads/2024/03/Artboard-15.png"
+       alt="DOTSOFT" style="height:32px; object-fit:contain; flex-shrink:0;" /></a>
   <div style="width:1px; height:28px; background:var(--border); flex-shrink:0;"></div>
   <div>
     <h1>Security &amp; Testing Hub</h1>
@@ -800,7 +798,7 @@
 </main>
 
 <footer style="text-align:center; padding:20px 24px; color:#484f58; font-size:.72rem; border-top:1px solid var(--border); margin-top:8px;">
-  Security &amp; Testing Hub
+  &copy; Copyright DOTSOFT SA 2026 . All Rights Reserved.
 </footer>
 
 <script>
@@ -1522,5 +1520,11 @@
   restoreRunningJobs();
   setInterval(refreshActivity, 3000);
 </script>
+
+{% if version %}
+<div style="position:fixed;bottom:10px;right:14px;font-size:11px;color:var(--muted);opacity:0.6;pointer-events:none;user-select:none;">
+  deployed {{ version.deployed_at }} &middot; {{ version.commit }}
+</div>
+{% endif %}
 </body>
 </html>

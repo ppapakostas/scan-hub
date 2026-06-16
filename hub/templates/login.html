@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — Security & Testing Hub</title>
+  <link rel="icon" type="image/png" href="/static/favicon.png" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh;
+      background: #0d1117;
+      display: flex; align-items: center; justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      color: #e6edf3;
+    }
+
+    .login-card {
+      width: 100%; max-width: 380px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 14px;
+      padding: 36px 32px;
+    }
+
+    .logo {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, #f85149, #f0883e);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin: 0 auto 20px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.25rem; font-weight: 600; text-align: center;
+    }
+    .sub {
+      text-align: center; color: #8b949e; font-size: .83rem; margin-bottom: 28px;
+    }
+
+    label {
+      display: block; color: #8b949e;
+      font-size: .78rem; font-weight: 500; margin-bottom: 5px;
+    }
+    .field { margin-bottom: 16px; }
+
+    input[type="text"], input[type="password"] {
+      width: 100%; padding: 10px 12px;
+      background: #0d1117; border: 1px solid #30363d;
+      border-radius: 8px; color: #e6edf3;
+      font-size: .9rem; outline: none;
+      transition: border-color .15s;
+    }
+    input:focus { border-color: #58a6ff; }
+    input::placeholder { color: #484f58; }
+
+    .btn-login {
+      width: 100%; padding: 11px;
+      background: #238636; border: none; border-radius: 8px;
+      color: #fff; font-size: .95rem; font-weight: 600;
+      cursor: pointer; transition: background .15s; margin-top: 4px;
+    }
+    .btn-login:hover { background: #2ea043; }
+    .btn-login:active { background: #1a7f37; }
+
+    .error {
+      background: rgba(248,81,73,.12);
+      border: 1px solid rgba(248,81,73,.4);
+      border-radius: 8px; padding: 10px 14px;
+      color: #f85149; font-size: .82rem; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .divider { border-color: #30363d; margin: 24px 0 0; }
+    .version { text-align: center; color: #484f58; font-size: .72rem; margin-top: 14px; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="logo"><i class="fa-solid fa-shield-halved"></i></div>
+    <h1>Security &amp; Testing Hub</h1>
+    <p class="sub">Sign in to continue</p>
+
+    {% if error %}
+    <div class="error"><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="/login" autocomplete="off">
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="Enter username"
+               autofocus required />
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="Enter password"
+               required />
+      </div>
+      <button type="submit" class="btn-login">Sign in</button>
+    </form>
+
+    <hr class="divider" />
+    <p class="version"></p>
+  </div>
+  <p style="position:fixed; bottom:16px; left:0; right:0; text-align:center;
+            color:#484f58; font-size:.72rem; margin:0;">
+    Security &amp; Testing Hub
+  </p>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Downloads — Security & Testing Hub</title>
+  <link rel="icon" type="image/png" href="/static/favicon.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    :root {
+      --bg: #0d1117; --surface: #161b22; --border: #30363d;
+      --text: #e6edf3; --muted: #8b949e;
+      --zap: #f85149; --jmeter: #f0883e; --sonar: #4d9cf4; --success: #3fb950; --warning: #d29922;
+    }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; min-height: 100vh; margin: 0; display: flex; flex-direction: column; }
+    main { flex: 1; max-width: 960px; width: 100%; margin: 0 auto; padding: 32px 24px 80px; }
+
+    header {
+      background: linear-gradient(135deg, #0d1117, #161b22);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 32px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    header h1 { margin: 0; font-size: 1.3rem; font-weight: 600; }
+    .header-logo {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--zap), var(--jmeter));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; text-decoration: none; flex-shrink: 0;
+      font-size: 16px;
+    }
+    .header-sub { color: var(--muted); font-size: .8rem; margin: 0; }
+    .back-btn { margin-left: auto; padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: #21262d; color: var(--text); text-decoration: none; font-size: .85rem; transition: background .15s; }
+    .back-btn:hover { background: var(--border); color: var(--text); }
+
+    h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+
+    /* ── Job group ── */
+    .job-group { margin-bottom: 16px; }
+
+    .job-meta {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 4px; margin-bottom: 6px;
+    }
+    .job-meta-date {
+      font-size: .72rem; color: var(--muted); white-space: nowrap; flex-shrink: 0;
+    }
+    .job-meta-sep { color: #30363d; font-size: .72rem; flex-shrink: 0; }
+    .job-meta-url {
+      font-size: .82rem; color: var(--text); font-weight: 500;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    /* ── Checkboxes ── */
+    .row-check { width: 16px; height: 16px; flex-shrink: 0; cursor: pointer; accent-color: #58a6ff; }
+
+    /* ── Job row ── */
+    .job-row {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 18px;
+      display: flex; align-items: center; gap: 14px;
+      transition: border-color .15s, background .15s;
+    }
+    .job-row:hover { border-color: #444c56; }
+    .job-row.selected { border-color: rgba(88,166,255,.5); background: rgba(88,166,255,.04); }
+
+    .tool-pill {
+      padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .4px; flex-shrink: 0;
+    }
+    .pill-zap    { background: rgba(248,81,73,.15); color: var(--zap); border: 1px solid var(--zap); }
+    .pill-jmeter { background: rgba(240,136,62,.15); color: var(--jmeter); border: 1px solid var(--jmeter); }
+    .pill-sonar  { background: rgba(77,156,244,.15); color: var(--sonar); border: 1px solid var(--sonar); }
+
+    .type-pill {
+      padding: 3px 9px; border-radius: 20px; font-size: .68rem; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .3px; flex-shrink: 0;
+      background: rgba(88,166,255,.1); color: #58a6ff; border: 1px solid rgba(88,166,255,.3);
+    }
+    .type-pill.stress { background: rgba(167,139,250,.1); color: #a78bfa; border-color: rgba(167,139,250,.3); }
+    .type-pill.full   { background: rgba(240,136,62,.1);  color: #f0883e; border-color: rgba(240,136,62,.3); }
+    .type-pill.ok     { background: rgba(63,185,80,.1);   color: var(--success); border-color: rgba(63,185,80,.3); }
+    .type-pill.error  { background: rgba(248,81,73,.1);   color: var(--zap);     border-color: rgba(248,81,73,.3); }
+    .type-pill.warn   { background: rgba(210,153,34,.1);  color: var(--warning); border-color: rgba(210,153,34,.3); }
+
+    .job-id { font-size: .7rem; color: var(--muted); font-family: monospace; flex: 1; }
+
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-done      { background: var(--success); }
+    .dot-error     { background: var(--zap); }
+    .dot-stopped   { background: var(--muted); }
+    .dot-no-report { background: var(--muted); }
+
+    .actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    .btn-action {
+      padding: 6px 14px; border-radius: 7px; border: 1px solid var(--border);
+      background: #21262d; color: var(--text); text-decoration: none;
+      font-size: .8rem; font-weight: 500; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 6px;
+      cursor: pointer; transition: background .15s; line-height: 1;
+    }
+    .btn-action:hover { background: var(--border); color: var(--text); }
+    .btn-action.disabled { opacity: .35; pointer-events: none; }
+    .btn-action.btn-danger { border-color: rgba(248,81,73,.3); color: #f85149; }
+    .btn-action.btn-danger:hover { background: rgba(248,81,73,.1); border-color: var(--zap); }
+
+    /* ── Bulk delete bar ── */
+    .bulk-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #161b22; border-top: 1px solid var(--border);
+      padding: 14px 32px; display: none; align-items: center; gap: 14px;
+      z-index: 100;
+    }
+    .bulk-bar.visible { display: flex; }
+    .bulk-count { font-size: .9rem; font-weight: 500; }
+    .bulk-count span { color: #58a6ff; }
+    .btn-bulk-delete {
+      margin-left: auto; padding: 8px 18px; border-radius: 8px;
+      border: 1px solid rgba(248,81,73,.4); background: rgba(248,81,73,.1);
+      color: #f85149; font-size: .85rem; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 8px; transition: background .15s;
+    }
+    .btn-bulk-delete:hover { background: rgba(248,81,73,.2); }
+    .btn-bulk-cancel {
+      padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border);
+      background: #21262d; color: var(--muted); font-size: .85rem; cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-bulk-cancel:hover { background: var(--border); color: var(--text); }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .empty-state i { font-size: 2.5rem; margin-bottom: 16px; display: block; opacity: .4; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="/hub" class="header-logo" aria-label="Security & Testing Hub">
+    <i class="fa-solid fa-shield-halved"></i>
+  </a>
+  <div style="width:1px; height:26px; background:var(--border); flex-shrink:0;"></div>
+  <div>
+    <h1>Downloads</h1>
+    <p class="header-sub">All completed scan &amp; test reports</p>
+  </div>
+  <a href="/hub" class="back-btn"><i class="fa-solid fa-arrow-left fa-xs"></i>&nbsp; Back to Hub</a>
+  <a href="/logout" class="back-btn" style="margin-left:8px; border-color:rgba(248,81,73,.3); color:#f85149"
+     onclick="return confirm('Sign out?')">
+    <i class="fa-solid fa-right-from-bracket fa-xs"></i>&nbsp; Logout
+  </a>
+</header>
+
+<main>
+  <h2>
+    <i class="fa-solid fa-folder-open" style="color:#8b949e"></i> Reports
+    {% if jobs %}
+    <label style="margin-left:4px; display:flex; align-items:center; gap:7px; font-size:.82rem; font-weight:400; color:var(--muted); cursor:pointer;">
+      <input type="checkbox" id="select-all" class="row-check" style="margin:0" /> Select all
+    </label>
+    {% endif %}
+  </h2>
+
+  <div id="jobs-list">
+  {% if jobs %}
+    {% for job in jobs %}
+    <div class="job-group" id="group-{{ job.slug }}">
+      <!-- Meta label above the card -->
+      <div class="job-meta">
+        <span class="job-meta-date" data-iso="{{ job.started_at }}">—</span>
+        <span class="job-meta-sep">·</span>
+        <span class="job-meta-url" title="{{ job.target }}">{{ job.target or '—' }}</span>
+      </div>
+      <!-- Card -->
+      <div class="job-row" id="row-{{ job.slug }}" data-slug="{{ job.slug }}">
+        <input type="checkbox" class="row-check job-check" data-slug="{{ job.slug }}"
+               onchange="onCheckChange()" />
+        <div class="status-dot {{ 'dot-done' if job.has_report else ('dot-stopped' if job.status == 'stopped' else ('dot-error' if job.status == 'error' else 'dot-no-report')) }}"
+             title="{{ 'Report ready' if job.has_report else ('Stopped' if job.status == 'stopped' else ('Failed' if job.status == 'error' else 'Completed — no HTML report')) }}"></div>
+        <span class="tool-pill {% if job.tool == 'zap' %}pill-zap{% elif job.tool == 'sonar' %}pill-sonar{% else %}pill-jmeter{% endif %}">
+          {{ job.tool }}
+        </span>
+        {% if job.scan_type %}
+        <span class="type-pill {{ job.scan_type | lower }}">{{ job.scan_type }}</span>
+        {% endif %}
+        <span class="job-id">{{ job.slug }}</span>
+        <div class="actions">
+          <a href="/downloads/{{ job.slug }}{{ '/' if job.tool == 'jmeter' else '' }}" target="_blank"
+             class="btn-action {{ '' if job.has_report else 'disabled' }}">
+            <i class="fa-solid fa-arrow-up-right-from-square fa-xs"></i>
+            {% if job.tool == 'sonar' %}SonarQube{% else %}Open{% endif %}
+          </a>
+          {% if job.tool != 'sonar' %}
+          <a href="/downloads/{{ job.slug }}/export"
+             class="btn-action {{ '' if job.has_report else 'disabled' }}">
+            <i class="fa-solid fa-download fa-xs"></i> Download
+          </a>
+          {% endif %}
+          <button class="btn-action btn-danger" onclick="deleteJob('{{ job.slug }}')">
+            <i class="fa-solid fa-trash fa-xs"></i> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state" id="empty-state">
+      <i class="fa-solid fa-inbox"></i>
+      <p>No completed scans yet.<br>Run a ZAP scan or JMeter test from the <a href="/hub" style="color:#58a6ff">hub</a>.</p>
+    </div>
+  {% endif %}
+  </div>
+</main>
+
+<!-- Bulk delete bar -->
+<div class="bulk-bar" id="bulk-bar">
+  <span class="bulk-count"><span id="bulk-count-num">0</span> selected</span>
+  <button class="btn-bulk-cancel" onclick="clearSelection()">Cancel</button>
+  <button class="btn-bulk-delete" onclick="bulkDelete()">
+    <i class="fa-solid fa-trash fa-xs"></i> Delete selected
+  </button>
+</div>
+
+<footer style="text-align:center; padding:20px 24px; color:#484f58; font-size:.72rem; border-top:1px solid var(--border); margin-top:8px;">
+  Security &amp; Testing Hub
+</footer>
+
+<script>
+  // ── Date formatting ───────────────────────────────────────────────────────
+  function formatDate(iso) {
+    if (!iso) return '—';
+    try {
+      const d = new Date(iso);
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    } catch { return '—'; }
+  }
+  document.querySelectorAll('[data-iso]').forEach(el => {
+    el.textContent = formatDate(el.dataset.iso);
+  });
+
+  // ── Select all ────────────────────────────────────────────────────────────
+  const selectAllCb = document.getElementById('select-all');
+  if (selectAllCb) {
+    selectAllCb.addEventListener('change', () => {
+      document.querySelectorAll('.job-check').forEach(cb => {
+        cb.checked = selectAllCb.checked;
+        cb.closest('.job-row').classList.toggle('selected', selectAllCb.checked);
+      });
+      onCheckChange();
+    });
+  }
+
+  function onCheckChange() {
+    const checks = [...document.querySelectorAll('.job-check')];
+    const selected = checks.filter(c => c.checked);
+    document.getElementById('bulk-count-num').textContent = selected.length;
+    document.getElementById('bulk-bar').classList.toggle('visible', selected.length > 0);
+    if (selectAllCb) {
+      selectAllCb.checked = selected.length === checks.length && checks.length > 0;
+      selectAllCb.indeterminate = selected.length > 0 && selected.length < checks.length;
+    }
+    checks.forEach(cb => cb.closest('.job-row').classList.toggle('selected', cb.checked));
+  }
+
+  function clearSelection() {
+    document.querySelectorAll('.job-check').forEach(cb => { cb.checked = false; });
+    if (selectAllCb) { selectAllCb.checked = false; selectAllCb.indeterminate = false; }
+    onCheckChange();
+  }
+
+  // ── Single delete ─────────────────────────────────────────────────────────
+  async function deleteJob(slug) {
+    if (!confirm('Delete this report and all stored files?')) return;
+    const res = await fetch(`/downloads/${slug}/delete`, { method: 'POST' });
+    if (res.ok) removeRow(slug);
+  }
+
+  function removeRow(slug) {
+    const group = document.getElementById(`group-${slug}`);
+    if (group) group.remove();
+    checkEmpty();
+    onCheckChange();
+  }
+
+  function checkEmpty() {
+    const list = document.getElementById('jobs-list');
+    if (!list.querySelector('.job-group')) {
+      list.innerHTML = `<div class="empty-state"><i class="fa-solid fa-inbox"></i><p>No completed scans yet.<br>Run a ZAP scan or JMeter test from the <a href="/hub" style="color:#58a6ff">hub</a>.</p></div>`;
+    }
+  }
+
+  // ── Bulk delete ───────────────────────────────────────────────────────────
+  async function bulkDelete() {
+    const selected = [...document.querySelectorAll('.job-check:checked')];
+    if (!selected.length) return;
+    if (!confirm(`Delete ${selected.length} report(s) and all stored files?`)) return;
+    for (const cb of selected) {
+      const slug = cb.dataset.slug;
+      const res = await fetch(`/downloads/${slug}/delete`, { method: 'POST' });
+      if (res.ok) removeRow(slug);
+    }
+    clearSelection();
+  }
+</script>
+</body>
+</html>

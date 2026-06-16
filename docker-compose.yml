@@ -1,0 +1,97 @@
+networks:
+  hub-net:
+    name: hub-net
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: security-hub-db
+    networks: [hub-net]
+    environment:
+      - POSTGRES_DB=hubdb
+      - POSTGRES_USER=hub
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-hubpass}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hub -d hubdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  hub:
+    build: ./hub
+    container_name: security-hub
+    hostname: security-hub
+    networks: [hub-net]
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOST_RESULTS_DIR}:/app/results
+      - ${HOST_UPLOADS_DIR}:/app/uploads
+    environment:
+      - HOST_RESULTS_DIR=${HOST_RESULTS_DIR}
+      - HUB_USERNAME=admin
+      - HUB_PASSWORD=admin
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-change-me}
+      - DATABASE_URL=postgresql://hub:${DB_PASSWORD:-hubpass}@db:5432/hubdb
+      - HUB_DOCKER_NETWORK=hub-net
+      - SONAR_HOST_URL=http://sonarqube:9000/sonar
+      - SONAR_PUBLIC_URL=${SONAR_PUBLIC_URL:-http://localhost:9000/sonar}
+      - SONAR_TOKEN=${SONAR_TOKEN:-}
+    restart: unless-stopped
+
+  sonar-db:
+    image: postgres:16-alpine
+    container_name: security-hub-sonardb
+    networks: [hub-net]
+    environment:
+      - POSTGRES_DB=sonardb
+      - POSTGRES_USER=sonar
+      - POSTGRES_PASSWORD=${SONAR_DB_PASSWORD:-sonarpass}
+    volumes:
+      - sonar_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar -d sonardb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: security-hub-sonarqube
+    networks: [hub-net]
+    depends_on:
+      sonar-db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:9000:9000"
+    environment:
+      - SONAR_JDBC_URL=jdbc:postgresql://sonar-db:5432/sonardb
+      - SONAR_JDBC_USERNAME=sonar
+      - SONAR_JDBC_PASSWORD=${SONAR_DB_PASSWORD:-sonarpass}
+      - SONAR_WEB_CONTEXT=/sonar
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_logs:/opt/sonarqube/logs
+      - sonar_extensions:/opt/sonarqube/extensions
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9000/sonar/api/system/status | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+volumes:
+  pgdata:
+  sonar_pgdata:
+  sonar_data:
+  sonar_logs:
+  sonar_extensions:

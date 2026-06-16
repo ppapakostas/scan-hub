@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Security & Testing Hub</title>
+  <link rel="icon" type="image/png" href="/static/favicon.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --border:    #30363d;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --zap:       #f85149;
+      --jmeter:    #f0883e;
+      --sonar:     #4d9cf4;
+      --success:   #3fb950;
+      --warning:   #d29922;
+      --btn-bg:    #21262d;
+      --btn-hover: #30363d;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+    }
+    main { flex: 1; }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .header-logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--zap), var(--jmeter));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; text-decoration: none; flex-shrink: 0;
+      font-size: 18px;
+    }
+    header h1 { margin: 0; font-size: 1.3rem; font-weight: 600; letter-spacing: -.3px; }
+    .header-sub { color: var(--muted); font-size: .8rem; margin: 0; }
+    .dl-link { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: #21262d; color: var(--text); text-decoration: none; font-size: .85rem; transition: background .15s; }
+    .dl-link:hover { background: var(--border); color: var(--text); }
+
+    /* ── Compact header activity widgets ── */
+    .header-activity {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 5px 11px;
+      font-size: .75rem; max-width: 260px; overflow: hidden;
+      transition: border-color .15s;
+    }
+    .header-activity:hover { border-color: #444c56; }
+    .hact-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+    .hact-dot-running-zap    { background: var(--zap);    animation: pulse 1.5s ease-in-out infinite; }
+    .hact-dot-running-jmeter { background: var(--jmeter); animation: pulse 1.5s ease-in-out infinite; }
+    .hact-dot-running-sonar  { background: var(--sonar);  animation: pulse 1.5s ease-in-out infinite; }
+    .hact-dot-done    { background: var(--success); }
+    .hact-dot-error   { background: var(--zap); }
+    .hact-dot-stopped { background: var(--muted); }
+    .hact-dot-starting { background: #58a6ff; animation: pulse 1.5s ease-in-out infinite; }
+    .hact-label { font-size: .67rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .4px; flex-shrink: 0; }
+    .hact-label-zap    { color: var(--zap); }
+    .hact-label-jmeter { color: var(--jmeter); }
+    .hact-label-sonar  { color: var(--sonar); }
+    .hact-target { color: var(--muted); overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; flex: 1; font-size: .73rem; }
+    .hact-status { font-size: .65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .3px; padding: 2px 6px; border-radius: 10px; flex-shrink: 0; border: 1px solid transparent; }
+    .hact-running  { background: rgba(240,136,62,.12); border-color: var(--jmeter); color: var(--jmeter); }
+    .hact-done     { background: rgba(63,185,80,.12);  border-color: var(--success); color: var(--success); }
+    .hact-error    { background: rgba(248,81,73,.12);  border-color: var(--zap); color: var(--zap); }
+    .hact-stopped  { background: rgba(139,148,158,.1); border-color: var(--muted); color: var(--muted); }
+    .hact-starting { background: rgba(88,166,255,.1);  border-color: #58a6ff; color: #58a6ff; }
+
+    /* ── Main grid ── */
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 32px 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+
+    /* ── Tool card ── */
+    .tool-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .tool-icon {
+      width: 32px; height: 32px;
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700; flex-shrink: 0;
+    }
+    .zap-icon   { background: rgba(248,81,73,.15); color: var(--zap); }
+    .jmeter-icon{ background: rgba(240,136,62,.15); color: var(--jmeter); }
+    .sonar-icon { background: rgba(77,156,244,.15); color: var(--sonar); }
+    .tool-name  { font-weight: 600; font-size: 1rem; }
+    .tool-desc  { color: var(--muted); font-size: .78rem; margin-top: 1px; }
+
+    .status-badge {
+      margin-left: auto;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: .72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      border: 1px solid transparent;
+    }
+    .status-idle    { background: rgba(139,148,158,.1); border-color: var(--border); color: var(--muted); }
+    .status-running { background: rgba(240,136,62,.15); border-color: var(--jmeter); color: var(--jmeter); }
+    .status-done    { background: rgba(63,185,80,.15);  border-color: var(--success); color: var(--success); }
+    .status-error   { background: rgba(248,81,73,.15);  border-color: var(--zap); color: var(--zap); }
+    .status-stopped { background: rgba(139,148,158,.1); border-color: var(--muted); color: var(--muted); }
+
+    .card-body { padding: 20px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
+
+    /* ── Form elements ── */
+    label.form-label { color: var(--muted); font-size: .8rem; margin-bottom: 5px; font-weight: 500; }
+
+    .hub-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 9px 12px;
+      font-size: .9rem;
+      transition: border-color .15s;
+      outline: none;
+    }
+    .hub-input:focus { border-color: #58a6ff; }
+    .hub-input::placeholder { color: var(--muted); }
+
+    .scan-options { display: flex; gap: 12px; }
+    .scan-option {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .scan-option:has(input:checked) { border-color: #58a6ff; background: rgba(88,166,255,.06); }
+    .scan-option input[type="radio"] { accent-color: #58a6ff; }
+    .scan-option-text .opt-title { font-size: .88rem; font-weight: 500; }
+    .scan-option-text .opt-sub   { font-size: .74rem; color: var(--muted); }
+
+    /* ── Mode tabs ── */
+    .mode-tabs { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    .mode-tab {
+      flex: 1; padding: 8px; text-align: center;
+      cursor: pointer; font-size: .82rem; font-weight: 500;
+      background: var(--bg); color: var(--muted);
+      border: none; transition: background .15s, color .15s;
+    }
+    .mode-tab.active { background: var(--btn-hover); color: var(--text); }
+
+    .param-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+    /* ── Buttons ── */
+    .btn-start {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-start:active { transform: scale(.98); }
+    .btn-start:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .btn-zap    { background: var(--zap);    color: #fff; }
+    .btn-jmeter { background: var(--jmeter); color: #fff; }
+    .btn-sonar  { background: var(--sonar);  color: #fff; }
+
+    /* ── Log panel ── */
+    .log-panel {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      flex: 1;
+      min-height: 220px;
+      max-height: 340px;
+      overflow-y: auto;
+      display: none;
+    }
+    .log-panel.visible { display: block; }
+    .log-panel pre {
+      margin: 0;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: .78rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .log-line               { color: var(--muted); }
+    .log-line.hub-line      { color: #58a6ff; }
+    .log-line.hub-phase     { color: #a78bfa; font-weight: 500; }
+    .log-line.hub-ok        { color: var(--success); font-weight: 500; }
+    .log-line.hub-alert     { color: var(--warning); font-weight: 500; }
+    .log-line.hub-heartbeat { color: #484f58; font-style: italic; }
+    .log-line.warn          { color: var(--warning); }
+    .log-line.pass          { color: var(--success); }
+    .log-line.fail          { color: var(--zap); }
+    .log-line.info          { color: var(--text); }
+
+    /* ── Report button ── */
+    .btn-report {
+      width: 100%;
+      padding: 9px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--btn-bg);
+      color: var(--text);
+      font-size: .86rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s;
+      display: none;
+      align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-report:hover   { background: var(--btn-hover); }
+    .btn-report.visible { display: flex; }
+
+    /* ── Spinner ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: none;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar       { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .file-drop {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+    .file-drop:hover, .file-drop.dragover {
+      border-color: #58a6ff;
+      background: rgba(88,166,255,.04);
+      color: var(--text);
+    }
+    .file-drop input[type="file"] { display: none; }
+    .file-drop .file-name { color: var(--success); font-weight: 500; margin-top: 6px; font-size: .82rem; }
+
+    /* ── Activity panel ── */
+    .activity-panel {
+      grid-column: 1 / -1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .activity-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .activity-header h3 { margin: 0; font-size: .95rem; font-weight: 600; }
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .refresh-label { margin-left: auto; color: var(--muted); font-size: .72rem; }
+
+    .activity-empty { padding: 28px; text-align: center; color: var(--muted); font-size: .85rem; }
+
+    .activity-row {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 14px;
+      transition: background .1s;
+    }
+    .activity-row:last-child { border-bottom: none; }
+    .activity-row:hover { background: rgba(255,255,255,.02); }
+
+    .act-tool-icon {
+      width: 28px; height: 28px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; flex-shrink: 0;
+    }
+    .act-target { flex: 1; font-size: .84rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .act-target small { color: var(--muted); font-size: .72rem; display: block; margin-top: 1px; }
+    .act-status { font-size: .72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; padding: 2px 8px; border-radius: 12px; border: 1px solid transparent; flex-shrink: 0; }
+    .act-running { background: rgba(240,136,62,.12); border-color: var(--jmeter); color: var(--jmeter); }
+    .act-done    { background: rgba(63,185,80,.12);  border-color: var(--success); color: var(--success); }
+    .act-error   { background: rgba(248,81,73,.12);  border-color: var(--zap); color: var(--zap); }
+    .act-stopped { background: rgba(139,148,158,.1); border-color: var(--muted); color: var(--muted); }
+    .act-starting{ background: rgba(88,166,255,.1);  border-color: #58a6ff; color: #58a6ff; }
+    .act-ago { font-size: .72rem; color: var(--muted); flex-shrink: 0; min-width: 60px; text-align: right; }
+    .act-btns { display: flex; gap: 6px; flex-shrink: 0; }
+    .act-btn {
+      padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--btn-bg); color: var(--text); font-size: .75rem;
+      cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+      transition: background .15s;
+    }
+    .act-btn:hover { background: var(--btn-hover); color: var(--text); }
+
+    /* ── New scan button ── */
+    .btn-new-scan {
+      padding: 3px 11px; border-radius: 6px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-size: .74rem; font-weight: 500;
+      cursor: pointer; display: none; align-items: center; gap: 5px;
+      transition: border-color .15s, color .15s;
+    }
+    .btn-new-scan.visible { display: inline-flex; }
+    .btn-new-scan:hover { border-color: #58a6ff; color: #58a6ff; }
+
+    /* ── Progress bar ── */
+    .scan-progress {
+      display: none; align-items: center; gap: 10px;
+    }
+    .scan-progress.visible { display: flex; }
+    .progress-bar-wrap {
+      flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; width: 0%; border-radius: 2px;
+      background: linear-gradient(90deg, #58a6ff, #a78bfa);
+      transition: width 1s linear;
+    }
+    .progress-label {
+      font-size: .75rem; color: var(--muted); flex-shrink: 0;
+      font-variant-numeric: tabular-nums; min-width: 48px; text-align: right;
+    }
+
+    /* ── Stop button ── */
+    .btn-stop {
+      width: 100%; padding: 9px; border-radius: 8px; border: 1px solid rgba(248,81,73,.4);
+      background: rgba(248,81,73,.1); color: var(--zap); font-size: .86rem; font-weight: 600;
+      cursor: pointer; display: none; align-items: center; justify-content: center; gap: 8px;
+      transition: background .15s;
+    }
+    .btn-stop:hover { background: rgba(248,81,73,.2); }
+    .btn-stop.visible { display: flex; }
+
+    /* ── Multi-URL queue ── */
+    .extra-url-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+    .btn-remove-url {
+      flex-shrink: 0; width: 32px; height: 32px;
+      background: none; border: 1px solid var(--border); border-radius: 7px;
+      color: var(--muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; transition: border-color .15s, color .15s;
+    }
+    .btn-remove-url:hover { border-color: var(--zap); color: var(--zap); }
+    .btn-add-more {
+      margin-top: 10px; background: none; border: none;
+      color: var(--muted); font-size: .8rem; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; padding: 0;
+      transition: color .15s;
+    }
+    .btn-add-more:hover { color: #58a6ff; }
+
+    /* ── Protocol selector + URL input wrap ── */
+    .url-input-wrap { display: flex; }
+    .protocol-select {
+      background: #21262d; border: 1px solid var(--border); border-right: none;
+      border-radius: 8px 0 0 8px; color: var(--muted); font-size: .82rem;
+      padding: 0 8px; cursor: pointer; outline: none; flex-shrink: 0;
+      appearance: none; -webkit-appearance: none;
+      transition: border-color .15s;
+    }
+    .protocol-select:focus { border-color: #58a6ff; }
+    .url-input-wrap .hub-input { border-radius: 0 8px 8px 0; }
+
+    /* ── Log tabs ── */
+    .log-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .log-tab {
+      padding: 3px 11px; border-radius: 20px; font-size: .72rem; font-weight: 500;
+      border: 1px solid var(--border); background: var(--btn-bg); color: var(--muted);
+      cursor: pointer; transition: border-color .15s, color .15s, background .15s;
+      white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis;
+    }
+    .log-tab:hover { border-color: #444c56; color: var(--text); }
+    .log-tab.log-tab-active { border-color: #58a6ff; color: #58a6ff; background: rgba(88,166,255,.08); }
+
+    /* ── Recently scanned ── */
+    .recent-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; min-height: 0; }
+    .recent-chip {
+      padding: 3px 10px; border-radius: 20px; font-size: .74rem;
+      border: 1px solid var(--border); background: var(--btn-bg); color: var(--muted);
+      cursor: pointer; transition: border-color .15s, color .15s; white-space: nowrap;
+      max-width: 200px; overflow: hidden; text-overflow: ellipsis;
+    }
+    .recent-chip:hover { border-color: #58a6ff; color: var(--text); }
+
+    /* ── Quality gate badge ── */
+    .gate-badge {
+      display: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 600;
+      text-align: center;
+      border: 1px solid transparent;
+    }
+    .gate-badge.gate-pass    { display:block; background:rgba(63,185,80,.12);  border-color:var(--success); color:var(--success); }
+    .gate-badge.gate-fail    { display:block; background:rgba(248,81,73,.12);  border-color:var(--zap);     color:var(--zap); }
+    .gate-badge.gate-warn    { display:block; background:rgba(210,153,34,.12); border-color:var(--warning); color:var(--warning); }
+    .gate-badge.gate-unknown { display:block; background:rgba(139,148,158,.1); border-color:var(--muted);   color:var(--muted); }
+
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="/hub" class="header-logo" aria-label="Security & Testing Hub">
+    <i class="fa-solid fa-shield-halved"></i>
+  </a>
+  <div style="width:1px; height:28px; background:var(--border); flex-shrink:0;"></div>
+  <div>
+    <h1>Security &amp; Testing Hub</h1>
+    <p class="header-sub"></p>
+  </div>
+  <div id="hact-zap-widget" class="header-activity" style="display:none" title="Last ZAP scan">
+    <div class="hact-dot" id="hact-zap-dot"></div>
+    <span class="hact-label hact-label-zap">ZAP</span>
+    <span class="hact-target" id="hact-zap-target"></span>
+    <span class="hact-status" id="hact-zap-status"></span>
+  </div>
+  <div id="hact-jmeter-widget" class="header-activity" style="display:none" title="Last JMeter test">
+    <div class="hact-dot" id="hact-jmeter-dot"></div>
+    <span class="hact-label hact-label-jmeter">JMeter</span>
+    <span class="hact-target" id="hact-jmeter-target"></span>
+    <span class="hact-status" id="hact-jmeter-status"></span>
+  </div>
+  <div id="hact-sonar-widget" class="header-activity" style="display:none" title="Last SonarQube scan">
+    <div class="hact-dot" id="hact-sonar-dot"></div>
+    <span class="hact-label hact-label-sonar">SONAR</span>
+    <span class="hact-target" id="hact-sonar-target"></span>
+    <span class="hact-status" id="hact-sonar-status"></span>
+  </div>
+  <a href="/downloads" class="dl-link" style="margin-left:auto"><i class="fa-solid fa-folder-open fa-xs"></i>&nbsp; Downloads</a>
+  <a href="/logout" class="dl-link" style="margin-left:8px; border-color:rgba(248,81,73,.3); color:#f85149"
+     onclick="return confirm('Sign out?')">
+    <i class="fa-solid fa-right-from-bracket fa-xs"></i>&nbsp; Logout
+  </a>
+</header>
+
+<main>
+
+  <!-- ══════════════════ OWASP ZAP CARD ══════════════════ -->
+  <div class="tool-card" id="zap-card">
+    <div class="card-header">
+      <div class="tool-icon zap-icon"><i class="fa-solid fa-bug"></i></div>
+      <div>
+        <div class="tool-name">OWASP ZAP</div>
+        <div class="tool-desc">Automated security scanning</div>
+      </div>
+      <span class="status-badge status-idle" id="zap-status">Idle</span>
+      <button class="btn-new-scan" id="zap-new-btn" onclick="resetTool('zap')">
+        <i class="fa-solid fa-rotate-left fa-xs"></i> New Scan
+      </button>
+    </div>
+
+    <div class="card-body">
+      <!-- URL -->
+      <div>
+        <label class="form-label"><i class="fa-solid fa-link fa-xs"></i>&nbsp; Target URL</label>
+        <div class="url-input-wrap">
+          <select class="protocol-select" id="zap-protocol">
+            <option value="https://">https://</option>
+            <option value="http://">http://</option>
+          </select>
+          <input class="hub-input" type="text" id="zap-url"
+                 placeholder="target-app.com" autocomplete="off" />
+        </div>
+        <div id="zap-extra-urls"></div>
+        <button class="btn-add-more" onclick="addMoreUrl('zap')">
+          <i class="fa-solid fa-plus fa-xs"></i> Add more
+        </button>
+        <div class="recent-wrap" id="zap-recent"></div>
+      </div>
+
+      <!-- Scan type -->
+      <div>
+        <label class="form-label"><i class="fa-solid fa-radar fa-xs"></i>&nbsp; Scan Type</label>
+        <div class="scan-options">
+          <label class="scan-option">
+            <input type="radio" name="zap-scan" value="baseline" checked />
+            <div class="scan-option-text">
+              <div class="opt-title">Baseline</div>
+              <div class="opt-sub">Fast · passive only</div>
+            </div>
+          </label>
+          <label class="scan-option">
+            <input type="radio" name="zap-scan" value="full" />
+            <div class="scan-option-text">
+              <div class="opt-title">Full Scan</div>
+              <div class="opt-sub">Active · thorough</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Start / Stop buttons -->
+      <button class="btn-start btn-zap" id="zap-start-btn" onclick="startZap()">
+        <span class="spinner" id="zap-spinner"></span>
+        <i class="fa-solid fa-play" id="zap-play-icon"></i>
+        <span id="zap-btn-text">Start Scan</span>
+      </button>
+      <div class="scan-progress" id="zap-progress">
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="zap-progress-fill"></div></div>
+        <span class="progress-label" id="zap-progress-label">0m 00s</span>
+      </div>
+      <button class="btn-stop" id="zap-stop-btn" onclick="stopJob('zap')">
+        <i class="fa-solid fa-stop"></i> Stop Scan
+      </button>
+
+      <!-- Log tabs + Log -->
+      <div class="log-tabs" id="zap-log-tabs"></div>
+      <div class="log-panel" id="zap-log-panel">
+        <pre id="zap-log"></pre>
+      </div>
+
+      <!-- Report -->
+      <button class="btn-report" id="zap-report-btn" onclick="openReport('zap')">
+        <i class="fa-solid fa-file-code"></i> View ZAP Report
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════ JMETER CARD ══════════════════ -->
+  <div class="tool-card" id="jmeter-card">
+    <div class="card-header">
+      <div class="tool-icon jmeter-icon"><i class="fa-solid fa-gauge-high"></i></div>
+      <div>
+        <div class="tool-name">Apache JMeter</div>
+        <div class="tool-desc">Load &amp; performance testing</div>
+      </div>
+      <span class="status-badge status-idle" id="jmeter-status">Idle</span>
+      <button class="btn-new-scan" id="jmeter-new-btn" onclick="resetTool('jmeter')">
+        <i class="fa-solid fa-rotate-left fa-xs"></i> New Test
+      </button>
+    </div>
+
+    <div class="card-body">
+      <!-- Mode tabs -->
+      <div>
+        <label class="form-label"><i class="fa-solid fa-sliders fa-xs"></i>&nbsp; Mode</label>
+        <div class="mode-tabs">
+          <button class="mode-tab active" id="tab-url"  onclick="setJmeterMode('url')">
+            <i class="fa-solid fa-link fa-xs"></i>&nbsp; From URL
+          </button>
+          <button class="mode-tab" id="tab-file" onclick="setJmeterMode('file')">
+            <i class="fa-solid fa-file-arrow-up fa-xs"></i>&nbsp; Upload .jmx
+          </button>
+        </div>
+      </div>
+
+      <!-- URL mode -->
+      <div id="jmeter-url-section">
+        <label class="form-label"><i class="fa-solid fa-link fa-xs"></i>&nbsp; Target URL</label>
+        <div class="url-input-wrap">
+          <select class="protocol-select" id="jmeter-protocol">
+            <option value="https://">https://</option>
+            <option value="http://">http://</option>
+          </select>
+          <input class="hub-input" type="text" id="jmeter-url"
+                 placeholder="target-app.com" autocomplete="off" />
+        </div>
+        <div id="jmeter-extra-urls"></div>
+        <button class="btn-add-more" onclick="addMoreUrl('jmeter')">
+          <i class="fa-solid fa-plus fa-xs"></i> Add more
+        </button>
+        <div class="recent-wrap" id="jmeter-recent"></div>
+      </div>
+
+      <!-- File mode -->
+      <div id="jmeter-file-section" style="display:none">
+        <label class="form-label"><i class="fa-solid fa-file-code fa-xs"></i>&nbsp; JMX Test Plan</label>
+        <div class="file-drop" id="file-drop-zone" onclick="document.getElementById('jmx-file-input').click()"
+             ondragover="fileDragOver(event)" ondragleave="fileDragLeave(event)" ondrop="fileDrop(event)">
+          <input type="file" id="jmx-file-input" accept=".jmx" onchange="fileSelected(this)" />
+          <i class="fa-solid fa-cloud-arrow-up" style="font-size:1.4rem; margin-bottom:8px; display:block"></i>
+          Click to browse or drag &amp; drop a .jmx file
+          <div class="file-name" id="file-name-display"></div>
+        </div>
+      </div>
+
+      <!-- Test mode (URL mode only) -->
+      <div id="jmeter-params">
+        <label class="form-label"><i class="fa-solid fa-gauge fa-xs"></i>&nbsp; Test Type</label>
+        <div class="scan-options">
+          <label class="scan-option">
+            <input type="radio" name="jmeter-mode" value="quick" checked />
+            <div class="scan-option-text">
+              <div class="opt-title">Quick</div>
+              <div class="opt-sub">10 users · ~10 sec</div>
+            </div>
+          </label>
+          <label class="scan-option">
+            <input type="radio" name="jmeter-mode" value="full" />
+            <div class="scan-option-text">
+              <div class="opt-title">Full</div>
+              <div class="opt-sub">50 users · ~5–8 min</div>
+            </div>
+          </label>
+          <label class="scan-option">
+            <input type="radio" name="jmeter-mode" value="stress" />
+            <div class="scan-option-text">
+              <div class="opt-title">Stress</div>
+              <div class="opt-sub">150 users · ~15 min</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Start / Stop buttons -->
+      <button class="btn-start btn-jmeter" id="jmeter-start-btn" onclick="startJmeter()">
+        <span class="spinner" id="jmeter-spinner"></span>
+        <i class="fa-solid fa-play" id="jmeter-play-icon"></i>
+        <span id="jmeter-btn-text">Start Test</span>
+      </button>
+      <div class="scan-progress" id="jmeter-progress">
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="jmeter-progress-fill"></div></div>
+        <span class="progress-label" id="jmeter-progress-label">0m 00s</span>
+      </div>
+      <button class="btn-stop" id="jmeter-stop-btn" onclick="stopJob('jmeter')">
+        <i class="fa-solid fa-stop"></i> Stop Test
+      </button>
+
+      <!-- Log tabs + Log -->
+      <div class="log-tabs" id="jmeter-log-tabs"></div>
+      <div class="log-panel" id="jmeter-log-panel">
+        <pre id="jmeter-log"></pre>
+      </div>
+
+      <!-- Report -->
+      <button class="btn-report" id="jmeter-report-btn" onclick="openReport('jmeter')">
+        <i class="fa-solid fa-chart-line"></i> View JMeter Report
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════ SONARQUBE CARD ══════════════════ -->
+  <div class="tool-card" id="sonar-card" style="grid-column: 1 / -1;">
+    <div class="card-header">
+      <div class="tool-icon sonar-icon"><i class="fa-solid fa-code"></i></div>
+      <div>
+        <div class="tool-name">SonarQube</div>
+        <div class="tool-desc">Static code analysis &amp; quality gate</div>
+      </div>
+      <span class="status-badge status-idle" id="sonar-status">Idle</span>
+      <button class="btn-new-scan" id="sonar-new-btn" onclick="resetTool('sonar')">
+        <i class="fa-solid fa-rotate-left fa-xs"></i> New Scan
+      </button>
+    </div>
+
+    <div class="card-body">
+
+      <!-- Mode tabs -->
+      <div>
+        <label class="form-label"><i class="fa-solid fa-sliders fa-xs"></i>&nbsp; Source</label>
+        <div class="mode-tabs">
+          <button class="mode-tab active" id="sonar-tab-git" onclick="setSonarMode('git')">
+            <i class="fa-brands fa-git-alt fa-xs"></i>&nbsp; Git Repository
+          </button>
+          <button class="mode-tab" id="sonar-tab-zip" onclick="setSonarMode('zip')">
+            <i class="fa-solid fa-file-zipper fa-xs"></i>&nbsp; Upload ZIP
+          </button>
+        </div>
+      </div>
+
+      <!-- Git mode -->
+      <div id="sonar-git-section">
+        <div style="display:grid; grid-template-columns:2fr 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label class="form-label"><i class="fa-brands fa-git-alt fa-xs"></i>&nbsp; Repository URL</label>
+            <input class="hub-input" type="text" id="sonar-repo"
+                   placeholder="https://github.com/user/repo.git" autocomplete="off" />
+            <div class="recent-wrap" id="sonar-recent"></div>
+          </div>
+          <div>
+            <label class="form-label"><i class="fa-solid fa-code-branch fa-xs"></i>&nbsp; Branch</label>
+            <input class="hub-input" type="text" id="sonar-branch" placeholder="main" value="main" />
+          </div>
+        </div>
+        <div>
+          <label class="form-label"><i class="fa-solid fa-key fa-xs"></i>&nbsp; Access Token <span style="font-weight:400;color:var(--muted)">(optional — private repos)</span></label>
+          <div style="position:relative;">
+            <input class="hub-input" type="password" id="sonar-git-token"
+                   placeholder="GitHub ghp_…  ·  Bitbucket API token (ATCTT3x…)  ·  GitLab PAT"
+                   autocomplete="new-password" style="padding-right:38px;" />
+            <button type="button" id="sonar-token-eye" onclick="toggleSonarToken()"
+                    title="Show / hide token"
+                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);
+                           background:none;border:none;color:var(--muted);cursor:pointer;padding:0;line-height:1;">
+              <i class="fa-regular fa-eye fa-sm"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ZIP mode -->
+      <div id="sonar-zip-section" style="display:none">
+        <label class="form-label"><i class="fa-solid fa-file-zipper fa-xs"></i>&nbsp; Source Archive</label>
+        <div class="file-drop" id="sonar-drop-zone"
+             onclick="document.getElementById('sonar-zip-input').click()"
+             ondragover="sonarFileDragOver(event)" ondragleave="sonarFileDragLeave(event)" ondrop="sonarFileDrop(event)">
+          <input type="file" id="sonar-zip-input" accept=".zip" onchange="sonarFileSelected(this)" />
+          <i class="fa-solid fa-cloud-arrow-up" style="font-size:1.4rem; margin-bottom:8px; display:block"></i>
+          Click to browse or drag &amp; drop a <strong>.zip</strong> of your source code
+          <div class="file-name" id="sonar-zip-name"></div>
+        </div>
+      </div>
+
+      <!-- Start / Stop -->
+      <button class="btn-start btn-sonar" id="sonar-start-btn" onclick="startSonar()">
+        <span class="spinner" id="sonar-spinner"></span>
+        <i class="fa-solid fa-play" id="sonar-play-icon"></i>
+        <span id="sonar-btn-text">Start Analysis</span>
+      </button>
+      <div class="scan-progress" id="sonar-progress">
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="sonar-progress-fill"
+               style="background:linear-gradient(90deg,var(--sonar),#a78bfa)"></div>
+        </div>
+        <span class="progress-label" id="sonar-progress-label">0m 00s</span>
+      </div>
+      <button class="btn-stop" id="sonar-stop-btn" onclick="stopJob('sonar')">
+        <i class="fa-solid fa-stop"></i> Stop Analysis
+      </button>
+
+      <!-- Log tabs (placeholder so resetTool works) + Log -->
+      <div class="log-tabs" id="sonar-log-tabs"></div>
+      <div class="log-panel" id="sonar-log-panel">
+        <pre id="sonar-log"></pre>
+      </div>
+
+      <!-- Quality gate badge -->
+      <div class="gate-badge" id="sonar-gate-badge"></div>
+
+      <!-- Report -->
+      <button class="btn-report" id="sonar-report-btn" onclick="openReport('sonar')">
+        <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in SonarQube
+      </button>
+    </div>
+  </div>
+
+
+</main>
+
+<footer style="text-align:center; padding:20px 24px; color:#484f58; font-size:.72rem; border-top:1px solid var(--border); margin-top:8px;">
+  Security &amp; Testing Hub
+</footer>
+
+<script>
+  // ── State ──────────────────────────────────────────────────────────────────
+  const state = {
+    zap:    { jobId: null, reportSlug: null, queue: [], queueTotal: 0, logs: {}, tabs: [], activeTab: null },
+    jmeter: { jobId: null, reportSlug: null, queue: [], queueTotal: 0, mode: 'url', selectedFile: null, logs: {}, tabs: [], activeTab: null },
+    sonar:  { jobId: null, reportSlug: null, queue: [], queueTotal: 0, logs: {}, tabs: [], activeTab: null, mode: 'git', selectedFile: null },
+  };
+
+  // ── Progress timers ────────────────────────────────────────────────────────
+  const _timers = {};
+
+  function startProgress(tool, estimatedSecs) {
+    stopProgress(tool);
+    const bar   = document.getElementById(`${tool}-progress`);
+    const fill  = document.getElementById(`${tool}-progress-fill`);
+    const label = document.getElementById(`${tool}-progress-label`);
+    bar.classList.add('visible');
+    fill.style.transition = 'none';
+    fill.style.width = '0%';
+    const started = Date.now();
+    _timers[tool] = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - started) / 1000);
+      const m = Math.floor(elapsed / 60);
+      const s = elapsed % 60;
+      label.textContent = `${m}m ${s.toString().padStart(2,'0')}s`;
+      const pct = Math.min(95, (elapsed / estimatedSecs) * 100);
+      fill.style.transition = 'width 1s linear';
+      fill.style.width = pct + '%';
+    }, 1000);
+  }
+
+  function stopProgress(tool) {
+    clearInterval(_timers[tool]);
+    delete _timers[tool];
+    document.getElementById(`${tool}-progress`).classList.remove('visible');
+    document.getElementById(`${tool}-progress-fill`).style.width = '0%';
+  }
+
+  // ── Recently scanned (localStorage) ───────────────────────────────────────
+  function recentKey(tool) { return `hub-recent-${tool}`; }
+
+  function saveRecentUrl(tool, url) {
+    let list = JSON.parse(localStorage.getItem(recentKey(tool)) || '[]');
+    list = [url, ...list.filter(u => u !== url)].slice(0, 6);
+    localStorage.setItem(recentKey(tool), JSON.stringify(list));
+    renderRecent(tool);
+  }
+
+  function normalizeUrl(url) {
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) return 'https://' + url;
+    return url;
+  }
+
+  function renderRecent(tool) {
+    const wrap = document.getElementById(`${tool}-recent`);
+    if (!wrap) return;
+    const raw = JSON.parse(localStorage.getItem(recentKey(tool)) || '[]');
+    const list = raw.map(normalizeUrl);
+    if (list.some((u, i) => u !== raw[i])) {
+      localStorage.setItem(recentKey(tool), JSON.stringify(list));
+    }
+    wrap.innerHTML = '';
+    list.forEach(url => {
+      const chip = document.createElement('span');
+      chip.className = 'recent-chip';
+      chip.title = url;
+      chip.textContent = url.replace(/^https?:\/\//, '');
+      chip.onclick = () => {
+        if (tool === 'sonar') {
+          document.getElementById('sonar-repo').value = url;
+          const savedTokens = JSON.parse(localStorage.getItem('hub-sonar-tokens') || '{}');
+          const tok = savedTokens[url] || '';
+          const tokenInput = document.getElementById('sonar-git-token');
+          tokenInput.value = tok;
+          tokenInput.type  = 'password';
+          document.querySelector('#sonar-token-eye i').className = 'fa-regular fa-eye fa-sm';
+          return;
+        }
+        const mainInput = document.getElementById(`${tool}-url`);
+        const protoSel  = document.getElementById(`${tool}-protocol`);
+        if (!mainInput.value.trim()) {
+          if (url.startsWith('http://'))       { protoSel.value = 'http://';  mainInput.value = url.slice(7); }
+          else if (url.startsWith('https://')) { protoSel.value = 'https://'; mainInput.value = url.slice(8); }
+          else                                  { mainInput.value = url; }
+        } else {
+          addMoreUrl(tool, url);
+        }
+      };
+      wrap.appendChild(chip);
+    });
+  }
+
+  // ── JMeter mode toggle ─────────────────────────────────────────────────────
+  function setJmeterMode(mode) {
+    state.jmeter.mode = mode;
+    document.getElementById('tab-url').classList.toggle('active', mode === 'url');
+    document.getElementById('tab-file').classList.toggle('active', mode === 'file');
+    document.getElementById('jmeter-url-section').style.display  = mode === 'url'  ? '' : 'none';
+    document.getElementById('jmeter-file-section').style.display = mode === 'file' ? '' : 'none';
+    document.getElementById('jmeter-params').style.display       = mode === 'url'  ? '' : 'none';
+  }
+
+  // ── File upload ────────────────────────────────────────────────────────────
+  function fileSelected(input) {
+    if (input.files[0]) {
+      state.jmeter.selectedFile = input.files[0];
+      document.getElementById('file-name-display').textContent = input.files[0].name;
+    }
+  }
+  function fileDragOver(e)  { e.preventDefault(); document.getElementById('file-drop-zone').classList.add('dragover'); }
+  function fileDragLeave(e) { document.getElementById('file-drop-zone').classList.remove('dragover'); }
+  function fileDrop(e) {
+    e.preventDefault();
+    document.getElementById('file-drop-zone').classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f && f.name.endsWith('.jmx')) {
+      state.jmeter.selectedFile = f;
+      document.getElementById('file-name-display').textContent = f.name;
+      document.getElementById('jmx-file-input').files = e.dataTransfer.files;
+    }
+  }
+
+  // ── Status helpers ─────────────────────────────────────────────────────────
+  function setStatus(tool, statusClass, label) {
+    const el = document.getElementById(`${tool}-status`);
+    el.className = `status-badge status-${statusClass}`;
+    el.textContent = label;
+  }
+
+  function setRunning(tool) {
+    document.getElementById(`${tool}-start-btn`).style.display = 'none';
+    document.getElementById(`${tool}-new-btn`).classList.remove('visible');
+    document.getElementById(`${tool}-stop-btn`).classList.add('visible');
+    document.getElementById(`${tool}-log-panel`).classList.add('visible');
+    document.getElementById(`${tool}-report-btn`).classList.remove('visible');
+    setStatus(tool, 'running', 'Running');
+  }
+
+  function setIdle(tool, statusClass, label, hasReport) {
+    document.getElementById(`${tool}-stop-btn`).classList.remove('visible');
+    document.getElementById(`${tool}-new-btn`).classList.add('visible');
+    stopProgress(tool);
+    setStatus(tool, statusClass, label);
+    if (hasReport) document.getElementById(`${tool}-report-btn`).classList.add('visible');
+  }
+
+  function resetTool(tool) {
+    clearLog(tool);
+    document.getElementById(`${tool}-log-panel`).classList.remove('visible');
+    document.getElementById(`${tool}-report-btn`).classList.remove('visible');
+    document.getElementById(`${tool}-new-btn`).classList.remove('visible');
+    document.getElementById(`${tool}-start-btn`).style.display = '';
+    document.getElementById(`${tool}-stop-btn`).classList.remove('visible');
+    stopProgress(tool);
+    setStatus(tool, 'idle', 'Idle');
+    state[tool].jobId = null;
+    state[tool].reportSlug = null;
+    state[tool].queue = [];
+    state[tool].queueTotal = 0;
+    state[tool].logs = {};
+    state[tool].tabs = [];
+    state[tool].activeTab = null;
+    const logTabs = document.getElementById(`${tool}-log-tabs`);
+    if (logTabs) logTabs.innerHTML = '';
+    const gateBadge = document.getElementById(`${tool}-gate-badge`);
+    if (gateBadge) gateBadge.className = 'gate-badge';
+    if (tool === 'sonar') {
+      state.sonar.mode = 'git';
+      state.sonar.selectedFile = null;
+      setSonarMode('git');
+      document.getElementById('sonar-zip-name').textContent = '';
+    }
+    clearExtraUrls(tool);
+  }
+
+  function setDone(tool, hasReport)  { setIdle(tool, 'done', 'Done', hasReport); }
+  function setError(tool)            { setIdle(tool, 'error', 'Error', false); }
+  function setStopped(tool)          { setIdle(tool, 'stopped', 'Stopped', false); }
+
+  // ── Log helpers ────────────────────────────────────────────────────────────
+  function classifyLine(line) {
+    if (line.startsWith('[HUB]')) {
+      if (line.includes('⏳')) return 'hub-heartbeat';
+      if (line.includes('✅') || line.includes('📊')) return 'hub-ok';
+      if (line.includes('🚨') || line.includes('⚠️') || line.includes('❌')) return 'hub-alert';
+      if (line.includes('⚡') || line.includes('🕷') || line.includes('🔍') ||
+          line.includes('📄') || line.includes('🔧') || line.includes('🚀') ||
+          line.includes('🔄') || line.includes('📤') || line.includes('Phase:')) return 'hub-phase';
+      return 'hub-line';
+    }
+    const u = line.toUpperCase();
+    if (u.includes('WARN') || u.includes('ALERT')) return 'warn';
+    if (u.includes('PASS') || u.includes('OK') || u.includes('SUCCESS')) return 'pass';
+    if (u.includes('FAIL') || u.includes('ERROR') || u.includes('FATAL')) return 'fail';
+    return 'info';
+  }
+
+  function _appendLogLine(tool, line) {
+    const pre = document.getElementById(`${tool}-log`);
+    const span = document.createElement('span');
+    span.className = `log-line ${classifyLine(line)}`;
+    span.textContent = line + '\n';
+    pre.appendChild(span);
+    const panel = document.getElementById(`${tool}-log-panel`);
+    panel.scrollTop = panel.scrollHeight;
+  }
+
+  function appendLog(tool, line, jobId) {
+    if (jobId) {
+      if (!state[tool].logs[jobId]) state[tool].logs[jobId] = [];
+      state[tool].logs[jobId].push(line);
+      if (jobId !== state[tool].activeTab) return;
+    }
+    _appendLogLine(tool, line);
+  }
+
+  function clearLog(tool) {
+    document.getElementById(`${tool}-log`).innerHTML = '';
+    state[tool].logs = {};
+    state[tool].tabs = [];
+    state[tool].activeTab = null;
+    const logTabs = document.getElementById(`${tool}-log-tabs`);
+    if (logTabs) logTabs.innerHTML = '';
+  }
+
+  function renderTabs(tool) {
+    const container = document.getElementById(`${tool}-log-tabs`);
+    if (!container) return;
+    const tabs = state[tool].tabs;
+    if (tabs.length < 2) { container.innerHTML = ''; return; }
+    container.innerHTML = tabs.map(t => {
+      const label = t.url.replace(/^https?:\/\//, '');
+      const active = t.jobId === state[tool].activeTab ? ' log-tab-active' : '';
+      return `<button class="log-tab${active}" onclick="switchTab('${tool}','${t.jobId}')" title="${t.url}">${label}</button>`;
+    }).join('');
+  }
+
+  function switchTab(tool, jobId) {
+    state[tool].activeTab = jobId;
+    renderTabs(tool);
+    document.getElementById(`${tool}-log`).innerHTML = '';
+    (state[tool].logs[jobId] || []).forEach(line => _appendLogLine(tool, line));
+  }
+
+  // ── Quality gate badge ─────────────────────────────────────────────────────
+  function showQualityGate(status) {
+    const badge = document.getElementById('sonar-gate-badge');
+    if (!badge || !status) return;
+    const map = {
+      'OK':    ['gate-pass', '<i class="fa-solid fa-circle-check fa-sm"></i> Quality Gate: PASSED'],
+      'ERROR': ['gate-fail', '<i class="fa-solid fa-circle-xmark fa-sm"></i> Quality Gate: FAILED'],
+      'WARN':  ['gate-warn', '<i class="fa-solid fa-triangle-exclamation fa-sm"></i> Quality Gate: WARNING'],
+    };
+    const [cls, html] = map[status] || ['gate-unknown', `Quality Gate: ${status}`];
+    badge.className = `gate-badge ${cls}`;
+    badge.innerHTML = html;
+  }
+
+  // ── SSE streaming ──────────────────────────────────────────────────────────
+  function streamJob(tool, jobId, slug, onComplete) {
+    const es = new EventSource(`/api/stream/${jobId}`);
+    es.onmessage = (e) => {
+      if (e.data === '__DONE__') {
+        es.close();
+        fetch(`/api/status/${jobId}`)
+          .then(r => r.json())
+          .then(d => {
+            if (d.status === 'stopped') setStopped(tool);
+            else if (d.status === 'error') setError(tool);
+            else {
+              setDone(tool, d.has_report);
+              if (d.has_report) {
+                state[tool].reportSlug = slug || d.slug;
+                if (tool === 'sonar' && d.scan_type) showQualityGate(d.scan_type);
+              }
+            }
+            if (onComplete) onComplete(d);
+          });
+        return;
+      }
+      appendLog(tool, e.data, jobId);
+    };
+    es.onerror = () => {
+      es.close();
+      appendLog(tool, '[HUB] Stream connection lost.', jobId);
+      setError(tool);
+      if (onComplete) onComplete({});
+    };
+  }
+
+  // ── Stop ──────────────────────────────────────────────────────────────────
+  async function stopJob(tool) {
+    const jobId = state[tool].jobId;
+    if (!jobId) return;
+    document.getElementById(`${tool}-stop-btn`).disabled = true;
+    await fetch(`/api/jobs/${jobId}/stop`, { method: 'POST' });
+    document.getElementById(`${tool}-stop-btn`).disabled = false;
+  }
+
+  // ── Multi-URL inputs ──────────────────────────────────────────────────────
+  const _extraCounters = { zap: 0, jmeter: 0, sonar: 0 };
+
+  function addMoreUrl(tool, prefillUrl) {
+    const container = document.getElementById(`${tool}-extra-urls`);
+    if (!container) return;
+    const idx = _extraCounters[tool]++;
+    let preProto = 'https://';
+    let preValue = '';
+    if (prefillUrl) {
+      if (prefillUrl.startsWith('http://'))       { preProto = 'http://';  preValue = prefillUrl.slice(7); }
+      else if (prefillUrl.startsWith('https://')) { preProto = 'https://'; preValue = prefillUrl.slice(8); }
+      else                                         { preValue = prefillUrl; }
+    }
+    const row = document.createElement('div');
+    row.className = 'extra-url-row';
+    row.id = `${tool}-extra-row-${idx}`;
+    row.innerHTML = `
+      <div class="url-input-wrap" style="flex:1">
+        <select class="protocol-select">
+          <option value="https://"${preProto === 'https://' ? ' selected' : ''}>https://</option>
+          <option value="http://"${preProto === 'http://'  ? ' selected' : ''}>http://</option>
+        </select>
+        <input class="hub-input" type="text" id="${tool}-extra-${idx}"
+               placeholder="another-url.com" autocomplete="off" />
+      </div>
+      <button class="btn-remove-url" onclick="removeExtraUrl('${tool}',${idx})" title="Remove">
+        <i class="fa-solid fa-xmark fa-xs"></i>
+      </button>`;
+    container.appendChild(row);
+    const input = row.querySelector('input[type="text"]');
+    if (preValue) { input.value = preValue; }
+    else { input.focus(); }
+  }
+
+  function removeExtraUrl(tool, idx) {
+    const row = document.getElementById(`${tool}-extra-row-${idx}`);
+    if (row) row.remove();
+  }
+
+  function applyProto(val, proto) {
+    if (!val) return '';
+    return (val.startsWith('http://') || val.startsWith('https://')) ? val : proto + val;
+  }
+
+  function collectUrls(tool) {
+    const urls = [];
+    const mainProto = document.getElementById(`${tool}-protocol`).value;
+    const main = document.getElementById(`${tool}-url`).value.trim();
+    if (main) urls.push(applyProto(main, mainProto));
+    const extra = document.getElementById(`${tool}-extra-urls`);
+    if (extra) {
+      extra.querySelectorAll('.extra-url-row').forEach(row => {
+        const sel = row.querySelector('.protocol-select');
+        const inp = row.querySelector('input[type="text"]');
+        if (!inp) return;
+        const v = inp.value.trim();
+        if (!v) return;
+        urls.push(applyProto(v, sel ? sel.value : 'https://'));
+      });
+    }
+    return urls;
+  }
+
+  function clearExtraUrls(tool) {
+    const container = document.getElementById(`${tool}-extra-urls`);
+    if (container) container.innerHTML = '';
+    _extraCounters[tool] = 0;
+  }
+
+  function _nextInQueue(tool) {
+    const q = state[tool].queue;
+    if (!q.length) { state[tool].queueTotal = 0; return; }
+    const done = state[tool].queueTotal - q.length;
+    setTimeout(() => {
+      appendLog(tool, `[HUB] 📋 Queue: scan ${done + 1} of ${state[tool].queueTotal} — ${q[0]}`);
+      if (tool === 'zap') _runZapScan(q[0]);
+      else _runJmeterScan(q[0]);
+    }, done === 0 ? 0 : 1200);
+  }
+
+  // ── ZAP ───────────────────────────────────────────────────────────────────
+  function startZap() {
+    const urls = collectUrls('zap');
+    if (!urls.length) { document.getElementById('zap-url').focus(); return; }
+    document.getElementById('zap-url').value = '';
+    clearExtraUrls('zap');
+    state.zap.queue = urls;
+    state.zap.queueTotal = urls.length;
+    clearLog('zap');
+    setRunning('zap');
+    _nextInQueue('zap');
+  }
+
+  async function _runZapScan(url) {
+    state.zap.queue.shift();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+    const scanType = document.querySelector('input[name="zap-scan"]:checked').value;
+
+    try {
+      const res = await fetch('/api/zap/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, scan_type: scanType }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        appendLog('zap', `[HUB] Error: ${data.error}`);
+        setError('zap');
+        _nextInQueue('zap');
+        return;
+      }
+      state.zap.jobId = data.job_id;
+      state.zap.tabs.push({ jobId: data.job_id, url, slug: data.slug });
+      state.zap.activeTab = data.job_id;
+      state.zap.logs[data.job_id] = [];
+      document.getElementById('zap-log').innerHTML = '';
+      renderTabs('zap');
+      saveRecentUrl('zap', url);
+      startProgress('zap', scanType === 'baseline' ? 90 : 600);
+      streamJob('zap', data.job_id, data.slug, () => {
+        stopProgress('zap');
+        if (state.zap.queue.length) {
+          setRunning('zap');
+          _nextInQueue('zap');
+        }
+      });
+    } catch (err) {
+      appendLog('zap', `[HUB] Request failed: ${err.message}`);
+      setError('zap');
+      _nextInQueue('zap');
+    }
+  }
+
+  // ── JMeter ────────────────────────────────────────────────────────────────
+  function startJmeter() {
+    const mode = state.jmeter.mode;
+
+    if (mode === 'file') {
+      if (!state.jmeter.selectedFile) { appendLog('jmeter', '[HUB] Please select a .jmx file first.'); setError('jmeter'); return; }
+      clearLog('jmeter');
+      setRunning('jmeter');
+      _runJmeterFile();
+      return;
+    }
+
+    const urls = collectUrls('jmeter');
+    if (!urls.length) { document.getElementById('jmeter-url').focus(); return; }
+    document.getElementById('jmeter-url').value = '';
+    clearExtraUrls('jmeter');
+    state.jmeter.queue = urls;
+    state.jmeter.queueTotal = urls.length;
+    clearLog('jmeter');
+    setRunning('jmeter');
+    _nextInQueue('jmeter');
+  }
+
+  async function _runJmeterScan(url) {
+    state.jmeter.queue.shift();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
+    const testMode = (document.querySelector('input[name="jmeter-mode"]:checked') || {}).value || 'quick';
+
+    const form = new FormData();
+    form.append('mode', 'url');
+    form.append('test_mode', testMode);
+    form.append('url', url);
+    saveRecentUrl('jmeter', url);
+
+    try {
+      const res = await fetch('/api/jmeter/run', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        appendLog('jmeter', `[HUB] Error: ${data.error}`);
+        setError('jmeter');
+        _nextInQueue('jmeter');
+        return;
+      }
+      state.jmeter.jobId = data.job_id;
+      state.jmeter.tabs.push({ jobId: data.job_id, url, slug: data.slug });
+      state.jmeter.activeTab = data.job_id;
+      state.jmeter.logs[data.job_id] = [];
+      document.getElementById('jmeter-log').innerHTML = '';
+      renderTabs('jmeter');
+      startProgress('jmeter', testMode === 'stress' ? 900 : testMode === 'full' ? 420 : 20);
+      streamJob('jmeter', data.job_id, data.slug, () => {
+        stopProgress('jmeter');
+        if (state.jmeter.queue.length) {
+          setRunning('jmeter');
+          _nextInQueue('jmeter');
+        }
+      });
+    } catch (err) {
+      appendLog('jmeter', `[HUB] Request failed: ${err.message}`);
+      setError('jmeter');
+      _nextInQueue('jmeter');
+    }
+  }
+
+  async function _runJmeterFile() {
+    const testMode = (document.querySelector('input[name="jmeter-mode"]:checked') || {}).value || 'quick';
+    const form = new FormData();
+    form.append('mode', 'file');
+    form.append('test_mode', testMode);
+    form.append('jmx_file', state.jmeter.selectedFile);
+    try {
+      const res = await fetch('/api/jmeter/run', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok || data.error) { appendLog('jmeter', `[HUB] Error: ${data.error}`); setError('jmeter'); return; }
+      state.jmeter.jobId = data.job_id;
+      startProgress('jmeter', testMode === 'stress' ? 900 : testMode === 'full' ? 420 : 20);
+      streamJob('jmeter', data.job_id, data.slug, () => stopProgress('jmeter'));
+    } catch (err) { appendLog('jmeter', `[HUB] Request failed: ${err.message}`); setError('jmeter'); }
+  }
+
+  // ── Token visibility toggle ───────────────────────────────────────────────
+  function toggleSonarToken() {
+    const input = document.getElementById('sonar-git-token');
+    const icon  = document.querySelector('#sonar-token-eye i');
+    const show  = input.type === 'password';
+    input.type      = show ? 'text'    : 'password';
+    icon.className  = show ? 'fa-regular fa-eye-slash fa-sm' : 'fa-regular fa-eye fa-sm';
+  }
+
+  // ── SonarQube mode toggle ─────────────────────────────────────────────────
+  function setSonarMode(mode) {
+    state.sonar.mode = mode;
+    document.getElementById('sonar-tab-git').classList.toggle('active', mode === 'git');
+    document.getElementById('sonar-tab-zip').classList.toggle('active', mode === 'zip');
+    document.getElementById('sonar-git-section').style.display = mode === 'git' ? '' : 'none';
+    document.getElementById('sonar-zip-section').style.display = mode === 'zip' ? '' : 'none';
+  }
+
+  // ── SonarQube file drop ────────────────────────────────────────────────────
+  function sonarFileSelected(input) {
+    if (input.files[0]) {
+      state.sonar.selectedFile = input.files[0];
+      document.getElementById('sonar-zip-name').textContent = input.files[0].name;
+    }
+  }
+  function sonarFileDragOver(e)  { e.preventDefault(); document.getElementById('sonar-drop-zone').classList.add('dragover'); }
+  function sonarFileDragLeave(e) { document.getElementById('sonar-drop-zone').classList.remove('dragover'); }
+  function sonarFileDrop(e) {
+    e.preventDefault();
+    document.getElementById('sonar-drop-zone').classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f && f.name.endsWith('.zip')) {
+      state.sonar.selectedFile = f;
+      document.getElementById('sonar-zip-name').textContent = f.name;
+      document.getElementById('sonar-zip-input').files = e.dataTransfer.files;
+    }
+  }
+
+  // ── SonarQube ─────────────────────────────────────────────────────────────
+  function startSonar() {
+    if (state.sonar.mode === 'zip') {
+      if (!state.sonar.selectedFile) {
+        appendLog('sonar', '[HUB] Please select a .zip file first.');
+        setError('sonar');
+        return;
+      }
+      clearLog('sonar');
+      setRunning('sonar');
+      _runSonarZip();
+      return;
+    }
+    const repoUrl = document.getElementById('sonar-repo').value.trim();
+    if (!repoUrl) { document.getElementById('sonar-repo').focus(); return; }
+    clearLog('sonar');
+    setRunning('sonar');
+    _runSonarGit(repoUrl);
+  }
+
+  async function _runSonarGit(repoUrl) {
+    const branch   = document.getElementById('sonar-branch').value.trim() || 'main';
+    const gitToken = document.getElementById('sonar-git-token').value.trim();
+    const form = new FormData();
+    form.append('mode', 'git');
+    form.append('repo_url', repoUrl);
+    form.append('branch', branch);
+    if (gitToken) form.append('git_token', gitToken);
+
+    try {
+      const res  = await fetch('/api/sonar/scan', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok || data.error) { appendLog('sonar', `[HUB] Error: ${data.error}`); setError('sonar'); return; }
+      saveRecentUrl('sonar', repoUrl);
+      if (gitToken) {
+        const tokens = JSON.parse(localStorage.getItem('hub-sonar-tokens') || '{}');
+        tokens[repoUrl] = gitToken;
+        localStorage.setItem('hub-sonar-tokens', JSON.stringify(tokens));
+      }
+      _sonarStartStream(data);
+    } catch (err) { appendLog('sonar', `[HUB] Request failed: ${err.message}`); setError('sonar'); }
+  }
+
+  async function _runSonarZip() {
+    const form = new FormData();
+    form.append('mode', 'zip');
+    form.append('zip_file', state.sonar.selectedFile);
+
+    try {
+      const res  = await fetch('/api/sonar/scan', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok || data.error) { appendLog('sonar', `[HUB] Error: ${data.error}`); setError('sonar'); return; }
+      _sonarStartStream(data);
+    } catch (err) { appendLog('sonar', `[HUB] Request failed: ${err.message}`); setError('sonar'); }
+  }
+
+  function _sonarStartStream(data) {
+    state.sonar.jobId = data.job_id;
+    state.sonar.reportSlug = null;
+    state.sonar.activeTab = data.job_id;
+    state.sonar.logs[data.job_id] = [];
+    startProgress('sonar', 360);
+    streamJob('sonar', data.job_id, data.slug, () => stopProgress('sonar'));
+  }
+
+  // ── Report ────────────────────────────────────────────────────────────────
+  function openReport(tool) {
+    const slug = state[tool].reportSlug;
+    if (!slug) return;
+    // For sonar: /downloads/<slug> redirects to the SonarQube dashboard URL
+    const trail = tool === 'jmeter' ? '/' : '';
+    window.open(`/downloads/${slug}${trail}`, '_blank');
+  }
+
+  // ── Time helper ───────────────────────────────────────────────────────────
+  function timeAgo(isoStr) {
+    if (!isoStr) return '';
+    const diff = Math.floor((Date.now() - new Date(isoStr)) / 1000);
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff/60)}m ago`;
+    return `${Math.floor(diff/3600)}h ago`;
+  }
+
+  // ── Header activity widgets (one per tool) ───────────────────────────────
+  function renderHeaderActivity(jobs) {
+    updateToolWidget('zap', jobs);
+    updateToolWidget('jmeter', jobs);
+    updateToolWidget('sonar', jobs);
+  }
+
+  function updateToolWidget(tool, jobs) {
+    const widget = document.getElementById(`hact-${tool}-widget`);
+    if (!widget) return;
+    const toolJobs = jobs.filter(j => j.tool === tool);
+    if (!toolJobs.length) { widget.style.display = 'none'; return; }
+
+    const last = toolJobs[0];
+    widget.style.display = 'flex';
+
+    const dot = document.getElementById(`hact-${tool}-dot`);
+    const isActive = last.status === 'running' || last.status === 'starting';
+    dot.className = isActive
+      ? `hact-dot hact-dot-running-${tool}`
+      : `hact-dot hact-dot-${last.status}`;
+
+    const target = last.target ? last.target.replace(/^https?:\/\//, '') : 'file';
+    document.getElementById(`hact-${tool}-target`).textContent = target;
+
+    const statusEl = document.getElementById(`hact-${tool}-status`);
+    statusEl.textContent = last.status.charAt(0).toUpperCase() + last.status.slice(1);
+    statusEl.className = `hact-status hact-${last.status}`;
+
+    if (last.has_report && last.slug) {
+      const trail = tool === 'jmeter' ? '/' : '';
+      widget.style.cursor = 'pointer';
+      widget.onclick = () => window.open(`/downloads/${last.slug}${trail}`, '_blank');
+      widget.title = 'Click to open report';
+    } else {
+      widget.style.cursor = 'default';
+      widget.onclick = null;
+      widget.title = `Last ${tool.toUpperCase()} scan`;
+    }
+  }
+
+  async function refreshActivity() {
+    try {
+      const jobs = await fetch('/api/jobs').then(r => r.json());
+      renderHeaderActivity(jobs);
+    } catch (_) {}
+  }
+
+  // ── Restore running jobs on page load ─────────────────────────────────────
+  async function restoreRunningJobs() {
+    let jobs;
+    try { jobs = await fetch('/api/jobs').then(r => r.json()); }
+    catch (_) { return; }
+
+    renderHeaderActivity(jobs);
+
+    for (const tool of ['zap', 'jmeter', 'sonar']) {
+      const running = jobs.find(j => j.tool === tool && j.status === 'running');
+      if (!running) continue;
+
+      state[tool].jobId = running.id;
+      clearLog(tool);
+      setRunning(tool);
+      const est = tool === 'zap'
+        ? (running.scan_type === 'baseline' ? 90 : 600)
+        : tool === 'jmeter'
+          ? (running.scan_type === 'quick' ? 20 : 420)
+          : 360;
+      startProgress(tool, est);
+
+      streamJob(tool, running.id, running.slug, () => stopProgress(tool));
+    }
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  renderRecent('zap');
+  renderRecent('jmeter');
+  renderRecent('sonar');
+  document.getElementById('zap-url').addEventListener('keydown', e => { if (e.key === 'Enter') startZap(); });
+  document.getElementById('jmeter-url').addEventListener('keydown', e => { if (e.key === 'Enter') startJmeter(); });
+  document.getElementById('sonar-repo').addEventListener('keydown', e => { if (e.key === 'Enter') startSonar(); });
+
+  restoreRunningJobs();
+  setInterval(refreshActivity, 3000);
+</script>
+</body>
+</html>

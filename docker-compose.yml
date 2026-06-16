@@ -10,7 +10,7 @@ services:
     environment:
       - POSTGRES_DB=hubdb
       - POSTGRES_USER=hub
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-hubpass}
+      - POSTGRES_PASSWORD=hubpass
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
@@ -22,8 +22,8 @@ services:
 
   hub:
     build: ./hub
-    container_name: security-hub
-    hostname: security-hub
+    container_name: scan-tool.dotsoft.gr
+    hostname: scan-tool.dotsoft.gr
     networks: [hub-net]
     ports:
       - "5000:5000"
@@ -36,10 +36,10 @@ services:
       - ${HOST_UPLOADS_DIR}:/app/uploads
     environment:
       - HOST_RESULTS_DIR=${HOST_RESULTS_DIR}
-      - HUB_USERNAME=admin
-      - HUB_PASSWORD=admin
-      - SECRET_KEY=${SECRET_KEY:-dev-secret-change-me}
-      - DATABASE_URL=postgresql://hub:${DB_PASSWORD:-hubpass}@db:5432/hubdb
+      - HUB_USERNAME=dotsoft
+      - HUB_PASSWORD=dotsoft123
+      - SECRET_KEY=h3!kP9xQz2mLvRsNwYuTdAeJbCfGiOp
+      - DATABASE_URL=postgresql://hub:hubpass@db:5432/hubdb
       - HUB_DOCKER_NETWORK=hub-net
       - SONAR_HOST_URL=http://sonarqube:9000/sonar
       - SONAR_PUBLIC_URL=${SONAR_PUBLIC_URL:-http://localhost:9000/sonar}
@@ -53,7 +53,7 @@ services:
     environment:
       - POSTGRES_DB=sonardb
       - POSTGRES_USER=sonar
-      - POSTGRES_PASSWORD=${SONAR_DB_PASSWORD:-sonarpass}
+      - POSTGRES_PASSWORD=sonarpass
     volumes:
       - sonar_pgdata:/var/lib/postgresql/data
     restart: unless-stopped
@@ -75,7 +75,7 @@ services:
     environment:
       - SONAR_JDBC_URL=jdbc:postgresql://sonar-db:5432/sonardb
       - SONAR_JDBC_USERNAME=sonar
-      - SONAR_JDBC_PASSWORD=${SONAR_DB_PASSWORD:-sonarpass}
+      - SONAR_JDBC_PASSWORD=sonarpass
       - SONAR_WEB_CONTEXT=/sonar
     volumes:
       - sonar_data:/opt/sonarqube/data
